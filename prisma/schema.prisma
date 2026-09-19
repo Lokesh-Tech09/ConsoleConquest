@@ -1,0 +1,76 @@
+// Prisma schema for Console Conquest: Mortal Kombat 11 Tournament Platform (ET-2026)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Participant {
+  id               String   @id @default(uuid())
+  registrationId   String   @unique
+  slotNumber       Int?     @unique
+  fullName         String
+  college          String
+  rollNumber       String   @unique
+  email            String   @unique
+  phone            String   @unique
+  gamerTag         String
+  preferredFighter String?
+  age              Int?
+  pool             String?  // "A", "B", "C", "D"
+  status           String   @default("REGISTERED") // REGISTERED, WAITLISTED, CHECKED-IN, PLAYING, ELIMINATED, ADVANCED, CANCELLED, DISQUALIFIED
+  waitlistPosition Int?
+  notes            String?
+  checkedInAt      DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([registrationId])
+  @@index([email])
+  @@index([phone])
+  @@index([status])
+  @@index([pool])
+}
+
+model TournamentSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model Match {
+  id             String   @id @default(uuid())
+  pool           String   @default("A") // "A", "B", "C", "D", "FINALS"
+  round          Int      // 1 (R32), 2 (R16), 3 (QF), 4 (SF), 5 (Group Final), or 1 (Semis), 2 (Grand Final / 3rd Place)
+  matchNumber    Int      // 1, 2, 3...
+  player1Slot    Int?
+  player2Slot    Int?
+  player1Name    String?
+  player2Name    String?
+  player1Tag     String?
+  player2Tag     String?
+  player1Fighter String?
+  player2Fighter String?
+  score1         Int      @default(0)
+  score2         Int      @default(0)
+  winnerSlot     Int?
+  winnerName     String?
+  status         String   @default("SCHEDULED") // SCHEDULED, LIVE, COMPLETED
+  nextMatchId    String?
+  updatedAt      DateTime @updatedAt
+
+  @@index([pool, round, matchNumber])
+}
+
+model AdminUser {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  passwordHash String
+  role         String   @default("ADMIN")
+  createdAt    DateTime @default(now())
+}
