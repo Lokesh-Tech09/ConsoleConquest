@@ -6,6 +6,7 @@ import ArenaParticles from '@/components/ArenaParticles';
 import CookieConsent from '@/components/CookieConsent';
 import StickyMobileCTA from '@/components/StickyMobileCTA';
 import AnalyticsProvider from '@/components/AnalyticsProvider';
+import { Analytics } from '@vercel/analytics/next';
 import { EVENT_CONFIG } from '@/lib/config';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://consoleconquest.aissms.ac.in';
@@ -106,6 +107,7 @@ export default function RootLayout({
         </div>
         <StickyMobileCTA />
         <CookieConsent />
+        <Analytics />
       </body>
     </html>
   );
