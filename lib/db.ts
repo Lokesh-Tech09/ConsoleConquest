@@ -16,6 +16,12 @@ let pragmasInitialized = false;
 
 export async function ensureSqliteOptimized() {
   if (pragmasInitialized) return;
+  const dbUrl = process.env.DATABASE_URL || '';
+  if (!dbUrl.startsWith('file:') && !dbUrl.startsWith('sqlite:')) {
+    pragmasInitialized = true;
+    return;
+  }
+
   try {
     await prisma.$queryRawUnsafe('PRAGMA journal_mode = WAL;');
     await prisma.$queryRawUnsafe('PRAGMA synchronous = NORMAL;');
