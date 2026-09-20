@@ -90,3 +90,29 @@ CREATE INDEX IF NOT EXISTS "Participant_pool_idx" ON "Participant"("pool");
 CREATE UNIQUE INDEX IF NOT EXISTS "TournamentSetting_key_key" ON "TournamentSetting"("key");
 CREATE INDEX IF NOT EXISTS "Match_pool_round_matchNumber_idx" ON "Match"("pool", "round", "matchNumber");
 CREATE UNIQUE INDEX IF NOT EXISTS "AdminUser_username_key" ON "AdminUser"("username");
+
+-- 6. Initial Seed Data (Tournament Settings & Superadmin)
+INSERT INTO "TournamentSetting" ("id", "key", "value", "updatedAt")
+VALUES 
+  (gen_random_uuid()::text, 'MAX_SLOTS', '128', NOW()),
+  (gen_random_uuid()::text, 'REGISTRATION_OPEN', 'true', NOW()),
+  (gen_random_uuid()::text, 'WAITLIST_ENABLED', 'true', NOW()),
+  (gen_random_uuid()::text, 'EVENT_NAME', 'Console Conquest', NOW()),
+  (gen_random_uuid()::text, 'GAME_NAME', 'Mortal Kombat 11', NOW()),
+  (gen_random_uuid()::text, 'MATCH_FORMAT', 'R32-SF Bo1 • Group Finals Bo3 • Semis Bo3 • Grand Final Bo5', NOW()),
+  (gen_random_uuid()::text, 'ENTRY_FEE', 'Rs 100 per participant', NOW()),
+  (gen_random_uuid()::text, 'VENUE', 'Room No. 340, AISSMS COE', NOW()),
+  (gen_random_uuid()::text, 'DATES', '29th & 30th September 2026, 9:00 am onwards', NOW())
+ON CONFLICT ("key") DO UPDATE SET "value" = EXCLUDED."value";
+
+-- Admin account: username "admin", password "kombat2026!"
+INSERT INTO "AdminUser" ("id", "username", "passwordHash", "role", "createdAt")
+VALUES (
+  gen_random_uuid()::text,
+  'admin',
+  '$2a$10$wW9r3Fv2Pq9fP2k7M9N4sOZgR7nE9.iP4y8E9R1r6cZt0bFkUeG2a',
+  'SUPERADMIN',
+  NOW()
+)
+ON CONFLICT ("username") DO NOTHING;
+
