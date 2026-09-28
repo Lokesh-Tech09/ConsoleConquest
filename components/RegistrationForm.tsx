@@ -167,7 +167,7 @@ export default function RegistrationForm() {
           CONSOLE CONQUEST ARENA ENLISTMENT
         </h2>
         <p className="mt-2 text-xs sm:text-sm leading-relaxed text-slate-300">
-          Department of AIML • {status?.maxSlots ?? 128} Total Contenders • 4 Symmetrical Pools of 32 • Entry Fee:{' '}
+          Department of AIML • {status?.maxSlots ?? 256} Total Contenders • 8 Symmetrical Pools of 32 • Entry Fee:{' '}
           <strong className="text-emerald-400 font-bold">₹100</strong>
         </p>
 
@@ -186,7 +186,7 @@ export default function RegistrationForm() {
 
         {isFull && !isClosed && (
           <div className="mt-4 rounded-lg border border-amber-800 bg-amber-950/60 p-3 text-xs font-bold text-amber-300">
-            All {status?.maxSlots ?? 128} tournament bracket slots have been claimed! You are registering for the official <strong>CHALLENGER WAITLIST</strong>.
+            All {status?.maxSlots ?? 256} tournament bracket slots have been claimed! You are registering for the official <strong>CHALLENGER WAITLIST</strong>.
           </div>
         )}
       </div>

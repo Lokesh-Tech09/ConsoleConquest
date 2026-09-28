@@ -9,10 +9,10 @@ export const EVENT_CONFIG = {
   EVENT_NAME: 'Console Conquest',
   GAME_NAME: 'Mortal Kombat 11',
   SUBTITLE: 'MORTAL KOMBAT 11 • 1V1 TOURNAMENT',
-  FORMAT: '1v1 Single Elimination Knockout (4 Pools of 32 → Final 4)',
+  FORMAT: '1v1 Single Elimination Knockout (8 Pools of 32 → Final 8)',
   PLATFORM: 'PlayStation 5 (Local 1v1 Versus Mode)',
-  DEFAULT_MAX_SLOTS: 128,
-  POOLS_COUNT: 4,
+  DEFAULT_MAX_SLOTS: 256,
+  POOLS_COUNT: 8,
   POOL_SIZE: 32,
   EVENT_DATE_DISPLAY: '29th & 30th September 2026, 9:00 am onwards',
   EVENT_DATE: '2026-09-29T09:00:00+05:30',
@@ -100,12 +100,16 @@ export const OFFICIAL_RULES = [
 
 export const MATCH_FORMAT_SETTINGS = {
   stageProgression: [
-    { stage: 'Registration', players: '128 Total Contenders', format: 'Randomized public draw into 4 pools of 32', advancement: 'All 128 compete from Round 1' },
+    { stage: 'Registration', players: '256 Total Contenders', format: 'Randomized public draw into 8 pools of 32', advancement: 'All 256 compete from Round 1' },
     { stage: 'Group A', players: '32 Contenders', format: 'R32 (16) → R16 (8) → QF (4) → SF (2) → Group Final (1)', advancement: '1 Pool Champion advances to Finals' },
     { stage: 'Group B', players: '32 Contenders', format: 'R32 (16) → R16 (8) → QF (4) → SF (2) → Group Final (1)', advancement: '1 Pool Champion advances to Finals' },
     { stage: 'Group C', players: '32 Contenders', format: 'R32 (16) → R16 (8) → QF (4) → SF (2) → Group Final (1)', advancement: '1 Pool Champion advances to Finals' },
     { stage: 'Group D', players: '32 Contenders', format: 'R32 (16) → R16 (8) → QF (4) → SF (2) → Group Final (1)', advancement: '1 Pool Champion advances to Finals' },
-    { stage: 'Championship Stage', players: '4 Pool Champions', format: 'Semifinal 1 (A vs B, Bo3) • Semifinal 2 (C vs D, Bo3) • Grand Final (Bo5) • 3rd-Place Match (Bo3)', advancement: '1st, 2nd, and 3rd Podium Decided' },
+    { stage: 'Group E', players: '32 Contenders', format: 'R32 (16) → R16 (8) → QF (4) → SF (2) → Group Final (1)', advancement: '1 Pool Champion advances to Finals' },
+    { stage: 'Group F', players: '32 Contenders', format: 'R32 (16) → R16 (8) → QF (4) → SF (2) → Group Final (1)', advancement: '1 Pool Champion advances to Finals' },
+    { stage: 'Group G', players: '32 Contenders', format: 'R32 (16) → R16 (8) → QF (4) → SF (2) → Group Final (1)', advancement: '1 Pool Champion advances to Finals' },
+    { stage: 'Group H', players: '32 Contenders', format: 'R32 (16) → R16 (8) → QF (4) → SF (2) → Group Final (1)', advancement: '1 Pool Champion advances to Finals' },
+    { stage: 'Championship Stage', players: '8 Pool Champions', format: 'Quarterfinals (Bo3) • Semifinals (Bo3) • Grand Final (Bo5) • 3rd-Place Match (Bo3)', advancement: '1st, 2nd, and 3rd Podium Decided' },
   ],
   consoleSettings: [
     { label: 'Platform & Setup', value: 'PlayStation 5 • Local 1v1 Versus Mode' },

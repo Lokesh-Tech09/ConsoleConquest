@@ -53,7 +53,7 @@ export default function StickyMobileCTA() {
         <div className="flex flex-col">
           <span className="text-[10px] font-black uppercase tracking-widest text-red-400 flex items-center gap-1">
             <Zap className="h-3 w-3 text-amber-400" />
-            128 SLOTS • ₹100
+            256 SLOTS • ₹100
           </span>
           <span className="font-heading text-xs font-black uppercase tracking-wider text-white">
             CONSOLE CONQUEST

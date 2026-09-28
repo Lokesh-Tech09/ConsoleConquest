@@ -50,7 +50,7 @@ export default function HomePage() {
                 </h2>
 
                 <p className="mt-3 max-w-xl text-xs sm:text-sm leading-relaxed text-slate-300">
-                  Claim your numbered tournament slot now. 128 Contenders across 4 Symmetrical Pools of 32 with zero automatic byes.
+                  Claim your numbered tournament slot now. 256 Contenders across 8 Symmetrical Pools of 32 with zero automatic byes.
                 </p>
 
                 <div className="mt-8 flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">

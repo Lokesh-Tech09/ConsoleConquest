@@ -15,8 +15,8 @@ export default function EventStats() {
     {
       icon: Swords,
       label: 'TOURNAMENT STRUCTURE',
-      value: '128 PLAYERS • 4 POOLS',
-      desc: 'Zero automatic byes. 4 symmetrical pools of 32 contenders advancing to the Championship stage.',
+      value: '256 PLAYERS • 8 POOLS',
+      desc: 'Zero automatic byes. 8 symmetrical pools of 32 contenders advancing to the Championship stage.',
       accent: 'text-red-400',
       border: 'hover:border-red-500/60',
     },

@@ -67,7 +67,11 @@ export default function TournamentBracket() {
     { key: 'B', name: 'POOL B', slots: 'Slots 033 - 064' },
     { key: 'C', name: 'POOL C', slots: 'Slots 065 - 096' },
     { key: 'D', name: 'POOL D', slots: 'Slots 097 - 128' },
-    { key: 'FINALS', name: 'CHAMPIONSHIP STAGE', slots: 'Final 4 Pool Champions' },
+    { key: 'E', name: 'POOL E', slots: 'Slots 129 - 160' },
+    { key: 'F', name: 'POOL F', slots: 'Slots 161 - 192' },
+    { key: 'G', name: 'POOL G', slots: 'Slots 193 - 224' },
+    { key: 'H', name: 'POOL H', slots: 'Slots 225 - 256' },
+    { key: 'FINALS', name: 'CHAMPIONSHIP STAGE', slots: '8 Pool Champions' },
   ];
 
   const poolRoundNames: Record<string, Record<number, string>> = {
@@ -75,7 +79,11 @@ export default function TournamentBracket() {
     B: { 1: 'ROUND OF 32 (Bo1)', 2: 'ROUND OF 16 (Bo1)', 3: 'QUARTERFINALS (Bo1)', 4: 'SEMIFINALS (Bo1)', 5: 'GROUP FINAL (Bo3)' },
     C: { 1: 'ROUND OF 32 (Bo1)', 2: 'ROUND OF 16 (Bo1)', 3: 'QUARTERFINALS (Bo1)', 4: 'SEMIFINALS (Bo1)', 5: 'GROUP FINAL (Bo3)' },
     D: { 1: 'ROUND OF 32 (Bo1)', 2: 'ROUND OF 16 (Bo1)', 3: 'QUARTERFINALS (Bo1)', 4: 'SEMIFINALS (Bo1)', 5: 'GROUP FINAL (Bo3)' },
-    FINALS: { 1: 'CHAMPIONSHIP SEMIFINALS (Bo3)', 2: 'GRAND FINAL (Bo5) & 3RD PLACE (Bo3)' },
+    E: { 1: 'ROUND OF 32 (Bo1)', 2: 'ROUND OF 16 (Bo1)', 3: 'QUARTERFINALS (Bo1)', 4: 'SEMIFINALS (Bo1)', 5: 'GROUP FINAL (Bo3)' },
+    F: { 1: 'ROUND OF 32 (Bo1)', 2: 'ROUND OF 16 (Bo1)', 3: 'QUARTERFINALS (Bo1)', 4: 'SEMIFINALS (Bo1)', 5: 'GROUP FINAL (Bo3)' },
+    G: { 1: 'ROUND OF 32 (Bo1)', 2: 'ROUND OF 16 (Bo1)', 3: 'QUARTERFINALS (Bo1)', 4: 'SEMIFINALS (Bo1)', 5: 'GROUP FINAL (Bo3)' },
+    H: { 1: 'ROUND OF 32 (Bo1)', 2: 'ROUND OF 16 (Bo1)', 3: 'QUARTERFINALS (Bo1)', 4: 'SEMIFINALS (Bo1)', 5: 'GROUP FINAL (Bo3)' },
+    FINALS: { 1: 'CHAMPIONSHIP QUARTERFINALS (Bo3)', 2: 'CHAMPIONSHIP SEMIFINALS (Bo3)', 3: 'GRAND FINAL (Bo5) & 3RD PLACE (Bo3)' },
   };
 
   const handlePoolChange = (poolKey: string) => {
@@ -88,7 +96,7 @@ export default function TournamentBracket() {
       <div className="flex h-64 items-center justify-center">
         <div className="flex items-center gap-3 text-red-500 font-heading text-lg font-bold">
           <Swords className="h-6 w-6 animate-spin" />
-          <span>LOADING 128-PLAYER TOURNAMENT BRACKET...</span>
+          <span>LOADING 256-PLAYER TOURNAMENT BRACKET...</span>
         </div>
       </div>
     );
@@ -107,10 +115,10 @@ export default function TournamentBracket() {
             <span>AISSMS COE • 21ST ENGINEERING TODAY-2026</span>
           </div>
           <h2 className="mt-1 font-heading text-2xl sm:text-3xl font-black uppercase text-white">
-            128-PLAYER CHAMPIONSHIP BRACKET
+            256-PLAYER CHAMPIONSHIP BRACKET
           </h2>
           <p className="text-xs text-slate-400">
-            4 Symmetrical Pools of 32 → 4 Pool Champions → Semifinals → Grand Final & 3rd Place
+            8 Symmetrical Pools of 32 → 8 Pool Champions → Quarterfinals → Semifinals → Grand Final & 3rd Place
           </p>
         </div>
 

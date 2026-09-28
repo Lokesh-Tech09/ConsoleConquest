@@ -95,7 +95,7 @@ export async function POST(
       let targetMatchNumber = Math.ceil(match.matchNumber / 2);
       let isPlayer1InNext = match.matchNumber % 2 !== 0;
 
-      // Special Case 1: Pool Championship (Round 5) -> Advances to FINALS Round 1 (Semifinals)
+      // Special Case 1: Pool Championship (Round 5) -> Advances to FINALS Round 1 (Quarterfinals)
       if (match.pool !== 'FINALS' && match.round === 5) {
         targetPool = 'FINALS';
         targetRound = 1;
@@ -111,20 +111,39 @@ export async function POST(
         } else if (match.pool === 'D') {
           targetMatchNumber = 2;
           isPlayer1InNext = false;
+        } else if (match.pool === 'E') {
+          targetMatchNumber = 3;
+          isPlayer1InNext = true;
+        } else if (match.pool === 'F') {
+          targetMatchNumber = 3;
+          isPlayer1InNext = false;
+        } else if (match.pool === 'G') {
+          targetMatchNumber = 4;
+          isPlayer1InNext = true;
+        } else if (match.pool === 'H') {
+          targetMatchNumber = 4;
+          isPlayer1InNext = false;
         }
       }
-      // Special Case 2: FINALS Semifinals (Round 1) -> Match 2 is Grand Final, Match 1 is 3rd Place
+      // Special Case 2: FINALS Quarterfinals (Round 1) -> Advances to FINALS Semifinals (Round 2)
       else if (match.pool === 'FINALS' && match.round === 1) {
-        // Winners go to Grand Final (FINALS Round 2, Match 2)
         targetPool = 'FINALS';
         targetRound = 2;
+        targetMatchNumber = Math.ceil(match.matchNumber / 2);
+        isPlayer1InNext = match.matchNumber % 2 !== 0;
+      }
+      // Special Case 3: FINALS Semifinals (Round 2) -> Match 2 is Grand Final, Match 1 is 3rd Place
+      else if (match.pool === 'FINALS' && match.round === 2) {
+        // Winners go to Grand Final (FINALS Round 3, Match 2)
+        targetPool = 'FINALS';
+        targetRound = 3;
         targetMatchNumber = 2; // Match #2 is Grand Final
         isPlayer1InNext = match.matchNumber === 1;
 
-        // Losers go to 3rd Place match (FINALS Round 2, Match 1)
+        // Losers go to 3rd Place match (FINALS Round 3, Match 1)
         if (loserSlot) {
           const thirdPlaceMatch = await prisma.match.findFirst({
-            where: { pool: 'FINALS', round: 2, matchNumber: 1 },
+            where: { pool: 'FINALS', round: 3, matchNumber: 1 },
           });
           const thirdPlaceData: Record<string, unknown> = match.matchNumber === 1
             ? { player1Slot: loserSlot, player1Name: loserName, player1Tag: loserTag, player1Fighter: loserFighter }
@@ -139,8 +158,8 @@ export async function POST(
         }
       }
 
-      // Check if not Grand Final (Grand Final has no next round)
-      const isGrandFinal = match.pool === 'FINALS' && match.round === 2;
+      // Check if not Grand Final (FINALS Round 3 Match 2 has no next round)
+      const isGrandFinal = match.pool === 'FINALS' && match.round === 3 && match.matchNumber === 2;
       if (!isGrandFinal) {
         const nextMatch = await prisma.match.findFirst({
           where: {

@@ -847,7 +847,7 @@ export default function AdminDashboard() {
           }`}
         >
           <Trophy className="h-4 w-4 text-amber-400" />
-          <span>MATCHES & WINNER CONTROL (128-PLAYER BRACKET)</span>
+          <span>MATCHES & WINNER CONTROL (256-PLAYER BRACKET)</span>
         </button>
       </div>
 
@@ -1056,13 +1056,17 @@ export default function AdminDashboard() {
             </div>
 
             {/* Pool Selector Tabs */}
-            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
+            <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-5 md:grid-cols-9">
               {[
                 { key: 'A', name: 'POOL A', desc: 'Slots 001 - 032' },
                 { key: 'B', name: 'POOL B', desc: 'Slots 033 - 064' },
                 { key: 'C', name: 'POOL C', desc: 'Slots 065 - 096' },
                 { key: 'D', name: 'POOL D', desc: 'Slots 097 - 128' },
-                { key: 'FINALS', name: 'FINALS', desc: 'Pool Champions' },
+                { key: 'E', name: 'POOL E', desc: 'Slots 129 - 160' },
+                { key: 'F', name: 'POOL F', desc: 'Slots 161 - 192' },
+                { key: 'G', name: 'POOL G', desc: 'Slots 193 - 224' },
+                { key: 'H', name: 'POOL H', desc: 'Slots 225 - 256' },
+                { key: 'FINALS', name: 'FINALS', desc: '8 Champions' },
               ].map((p) => {
                 const isSelected = adminSelectedPool === p.key;
                 return (
@@ -1112,8 +1116,9 @@ export default function AdminDashboard() {
                 ))
               ) : (
                 [
-                  { r: 1, name: 'CHAMPIONSHIP SEMIFINALS (2 Matches)' },
-                  { r: 2, name: 'GRAND FINAL & 3RD PLACE (2 Matches)' },
+                  { r: 1, name: 'CHAMPIONSHIP QUARTERS (4 Matches)' },
+                  { r: 2, name: 'CHAMPIONSHIP SEMIFINALS (2 Matches)' },
+                  { r: 3, name: 'GRAND FINAL & 3RD PLACE (2 Matches)' },
                 ].map((rd) => (
                   <button
                     key={rd.r}
@@ -1591,7 +1596,7 @@ export default function AdminDashboard() {
                 <input
                   type="number"
                   min="4"
-                  max="128"
+                  max="256"
                   value={maxSlotsInput}
                   onChange={(e) => setMaxSlotsInput(Number(e.target.value))}
                   className="mt-1.5 w-full rounded-lg border border-slate-800 bg-black/60 px-4 py-2 text-sm text-white focus:border-red-500 focus:outline-none"
@@ -1647,7 +1652,7 @@ export default function AdminDashboard() {
 
       {/* Edit Contender & Slot Customization Modal */}
       {reassignModalOpen && targetParticipant && (() => {
-        const totalSlots = stats?.totalSlots || 128;
+        const totalSlots = stats?.totalSlots || 256;
         const targetSlotNum = editForm.slotNumber === '' ? null : Number(editForm.slotNumber);
         const slotOccupant = targetSlotNum !== null && targetSlotNum !== targetParticipant.slotNumber
           ? participants.find(
@@ -1658,13 +1663,12 @@ export default function AdminDashboard() {
             )
           : null;
 
-        const poolSize = Math.ceil(totalSlots / 4);
+        const poolSize = 32;
         let previewPool = 'Waitlist / None';
         if (targetSlotNum && targetSlotNum >= 1 && targetSlotNum <= totalSlots) {
-          if (targetSlotNum <= poolSize) previewPool = 'Pool A';
-          else if (targetSlotNum <= poolSize * 2) previewPool = 'Pool B';
-          else if (targetSlotNum <= poolSize * 3) previewPool = 'Pool C';
-          else previewPool = 'Pool D';
+          const poolIdx = Math.floor((targetSlotNum - 1) / poolSize);
+          const poolLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+          previewPool = poolLetters[poolIdx] ? `Pool ${poolLetters[poolIdx]}` : 'Unknown';
         }
 
         return (
@@ -1971,7 +1975,7 @@ export default function AdminDashboard() {
               <div className="space-y-2 rounded-lg border border-slate-800 bg-black/40 p-3">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span className="text-[10px] font-bold uppercase text-slate-400 mr-1">POOL:</span>
-                  {['A', 'B', 'C', 'D', 'FINALS'].map((p) => (
+                  {['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'FINALS'].map((p) => (
                     <button
                       key={p}
                       type="button"
@@ -1998,7 +2002,7 @@ export default function AdminDashboard() {
 
                 <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-800/60">
                   <span className="text-[10px] font-bold uppercase text-slate-400 mr-1">ROUND:</span>
-                  {(modalPoolFilter !== 'FINALS' ? [1, 2, 3, 4, 5] : [1, 2]).map((r) => (
+                  {(modalPoolFilter !== 'FINALS' ? [1, 2, 3, 4, 5] : [1, 2, 3]).map((r) => (
                     <button
                       key={r}
                       type="button"

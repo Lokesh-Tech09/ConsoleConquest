@@ -92,7 +92,7 @@ export default function HeroSection({ onReplayIntro }: HeroSectionProps) {
           <p className="mt-4 max-w-2xl text-xs sm:text-sm leading-relaxed text-slate-300">
             &ldquo;{EVENT_CONFIG.TAGLINE}&rdquo;
             <br />
-            <strong>128 Contenders • 4 Symmetrical Pools of 32 • Zero Byes • PlayStation 5 Local Versus Mode</strong>
+            <strong>256 Contenders • 8 Symmetrical Pools of 32 • Zero Byes • PlayStation 5 Local Versus Mode</strong>
           </p>
 
           {/* Key Event Badges Grid */}

@@ -58,7 +58,7 @@ export default function SlotCounter({ initialStatus, compact = false }: SlotCoun
     };
   }, []);
 
-  const totalSlots = status?.maxSlots || 128;
+  const totalSlots = status?.maxSlots || 256;
   const registeredCount = status?.registeredCount || 0;
   const availableSlots = Math.max(0, totalSlots - registeredCount);
   const percentage = Math.min(100, Math.round((registeredCount / totalSlots) * 100));

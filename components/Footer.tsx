@@ -24,7 +24,7 @@ export default function Footer() {
               </div>
             </div>
             <p className="mt-3 max-w-md text-xs sm:text-sm leading-relaxed text-slate-300">
-              Organized by the <strong className="text-white">{EVENT_CONFIG.DEPARTMENT}</strong> as part of the <strong className="text-white">{EVENT_CONFIG.FESTIVAL_NAME}</strong>. An official 128-contender 1v1 Mortal Kombat 11 championship on PlayStation 5.
+              Organized by the <strong className="text-white">{EVENT_CONFIG.DEPARTMENT}</strong> as part of the <strong className="text-white">{EVENT_CONFIG.FESTIVAL_NAME}</strong>. An official 256-contender 1v1 Mortal Kombat 11 championship on PlayStation 5.
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-300">
               <span className="rounded bg-slate-900 px-2 py-1 border border-slate-800">Platform: {EVENT_CONFIG.PLATFORM}</span>
@@ -46,7 +46,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/bracket" prefetch={true} className="text-slate-300 transition-colors hover:text-red-400 py-1 inline-block touch-manipulation">
-                  128-Player Bracket (4 Pools)
+                  256-Player Bracket (8 Pools)
                 </Link>
               </li>
               <li>

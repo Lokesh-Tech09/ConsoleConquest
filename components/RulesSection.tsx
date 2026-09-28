@@ -53,12 +53,12 @@ export default function RulesSection() {
           </div>
         </div>
 
-        {/* 2. Tournament Structure (4 Symmetrical Pools of 32) */}
+        {/* 2. Tournament Structure (8 Symmetrical Pools of 32) */}
         <div>
           <div className="flex items-center gap-2 mb-6">
             <Flame className="h-5 w-5 text-amber-400" />
             <h3 className="font-heading text-xl font-black uppercase tracking-wider text-white">
-              TOURNAMENT STRUCTURE (128 CONTENDERS → 4 POOLS)
+              TOURNAMENT STRUCTURE (256 CONTENDERS → 8 POOLS)
             </h3>
           </div>
 
@@ -89,7 +89,7 @@ export default function RulesSection() {
           <div className="mt-4 rounded-xl border border-purple-500/40 bg-purple-950/20 p-4 text-xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <span className="font-heading font-bold text-purple-200">
-                128 Registered Contenders → 4 Symmetrical Pools of 32 → 4 Pool Champions → Semifinals → Grand Final & 3rd-Place Match → 1st, 2nd, and 3rd Podium Decided.
+                256 Registered Contenders → 8 Symmetrical Pools of 32 → 8 Pool Champions → Quarterfinals → Semifinals → Grand Final & 3rd-Place Match → 1st, 2nd, and 3rd Podium Decided.
               </span>
               <span className="shrink-0 rounded bg-purple-900/60 border border-purple-600/50 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-purple-200">
                 ZERO AUTOMATIC BYES

@@ -112,7 +112,7 @@ export default function ConfirmationCard({ participant }: ConfirmationCardProps)
         {/* Dramatic Slot Number Highlight */}
         <div className="my-6 rounded-xl border border-red-500/40 bg-gradient-to-r from-red-950/40 via-black to-red-950/40 p-5 text-center shadow-inner">
           <span className="block text-xs font-black uppercase tracking-widest text-red-400">
-            {isWaitlisted ? 'WAITLIST POSITION' : `OFFICIAL 128-PLAYER TOURNAMENT SEED (POOL ${pool})`}
+            {isWaitlisted ? 'WAITLIST POSITION' : `OFFICIAL 256-PLAYER TOURNAMENT SEED (POOL ${pool})`}
           </span>
           <div className="mt-1 font-heading text-6xl sm:text-7xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-red-200 to-red-500 drop-shadow-[0_0_25px_rgba(225,29,72,0.8)]">
             {reveal ? (
@@ -199,7 +199,7 @@ export default function ConfirmationCard({ participant }: ConfirmationCardProps)
           className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-900/80 px-6 py-3 font-heading text-sm font-bold tracking-wider text-slate-200 hover:border-slate-500 hover:text-white transition-all"
         >
           <Trophy className="h-4 w-4 text-amber-400" />
-          <span>VIEW 128-PLAYER BRACKET</span>
+          <span>VIEW 256-PLAYER BRACKET</span>
         </Link>
 
         <Link

@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     template: `%s | ${EVENT_CONFIG.EVENT_NAME}`,
   },
   description:
-    'Official collegiate Mortal Kombat 11 1v1 Tournament at AISSMS COE (21st Engineering Today 2026). ₹8,000 Prize Pool, 128 contenders, 4 pools of 32, zero automatic byes on PlayStation 5. Register now for ₹100.',
+    'Official collegiate Mortal Kombat 11 1v1 Tournament at AISSMS COE (21st Engineering Today 2026). ₹8,000 Prize Pool, 256 contenders, 8 pools of 32, zero automatic byes on PlayStation 5. Register now for ₹100.',
   keywords: [
     'Mortal Kombat 11',
     'Console Conquest',
@@ -59,7 +59,7 @@ export const metadata: Metadata = {
     siteName: 'Console Conquest - Mortal Kombat 11 Tournament',
     title: 'Console Conquest | Mortal Kombat 11 1v1 Esports Championship',
     description:
-      'Enter the arena for Console Conquest: Mortal Kombat 11 1v1 college esports championship at AISSMS COE. 128 Contenders, ₹8,000 Prize Pool, Live Brackets.',
+      'Enter the arena for Console Conquest: Mortal Kombat 11 1v1 college esports championship at AISSMS COE. 256 Contenders, ₹8,000 Prize Pool, Live Brackets.',
     images: [
       {
         url: '/opengraph-image',
@@ -73,7 +73,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Console Conquest | Mortal Kombat 11 1v1 Esports Tournament',
     description:
-      'Enter the arena for Console Conquest: Mortal Kombat 11 1v1 championship at AISSMS COE. ₹8,000 Prize Pool, 128 slots.',
+      'Enter the arena for Console Conquest: Mortal Kombat 11 1v1 championship at AISSMS COE. ₹8,000 Prize Pool, 256 slots.',
     images: ['/opengraph-image'],
     creator: '@AISSMSCOE',
   },

@@ -47,13 +47,12 @@ export interface AllocationResult {
   field?: string;
 }
 
-export function calculatePoolFromSlot(slot: number | null, maxSlots = 128): string | null {
+export function calculatePoolFromSlot(slot: number | null, maxSlots = 256): string | null {
   if (!slot || slot < 1) return null;
-  const poolSize = Math.ceil(maxSlots / 4);
-  if (slot <= poolSize) return 'A';
-  if (slot <= poolSize * 2) return 'B';
-  if (slot <= poolSize * 3) return 'C';
-  return 'D';
+  const poolSize = 32;
+  const poolIndex = Math.floor((slot - 1) / poolSize);
+  const pools = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+  return pools[poolIndex] || null;
 }
 
 let cachedSettings: {

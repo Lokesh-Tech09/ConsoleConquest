@@ -75,12 +75,12 @@ export default function TermsPage() {
               <h2>2. Slot Allocation, Waitlist &amp; Refund Policy</h2>
             </div>
             <p className="mt-3 text-xs sm:text-sm leading-relaxed text-slate-300">
-              Slots are allocated dynamically and atomically on a strict first-come, first-served basis up to 128 maximum contenders across 4 symmetric pools (A, B, C, D):
+              Slots are allocated dynamically and atomically on a strict first-come, first-served basis up to 256 maximum contenders across 8 symmetric pools (A, B, C, D, E, F, G, H):
             </p>
             <ul className="mt-3 list-disc space-y-1.5 pl-5 text-xs sm:text-sm text-slate-300">
               <li>The registration fee is <strong className="text-white">₹100 per participant</strong>.</li>
               <li>Registration fees are <strong className="text-red-400">non-refundable</strong> once a slot is confirmed, except in the event of tournament cancellation by the organizing committee.</li>
-              <li>Registrations beyond slot 128 are automatically placed on the numbered Waitlist. If a confirmed contender fails to check in 15 minutes before their scheduled pool kickoff, waitlisted players are promoted sequentially.</li>
+              <li>Registrations beyond slot 256 are automatically placed on the numbered Waitlist. If a confirmed contender fails to check in 15 minutes before their scheduled pool kickoff, waitlisted players are promoted sequentially.</li>
             </ul>
           </div>
 
