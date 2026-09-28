@@ -57,3 +57,6 @@ next-env.d.ts
 # Agent tooling
 .agents/
 skills-lock.json
+
+.vercel
+.env*
