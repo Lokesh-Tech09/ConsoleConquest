@@ -18,9 +18,15 @@ import {
   CheckCircle,
   RefreshCw,
   Lock,
+  ArrowRightLeft,
+  UserCog,
+  GripVertical,
+  Move,
+  Sparkles,
 } from 'lucide-react';
 import { ParticipantData, MatchData } from '@/lib/types';
 import { combatSound } from '@/lib/sound';
+import { MK11_ROSTER } from '@/lib/config';
 
 export default function AdminDashboard() {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
@@ -68,11 +74,33 @@ export default function AdminDashboard() {
   const [score2Input, setScore2Input] = useState(0);
   const [winnerSlotInput, setWinnerSlotInput] = useState<number | null>(null);
 
-  // Slot reassignment modal
+  // Participant & Slot Edit modal
   const [reassignModalOpen, setReassignModalOpen] = useState(false);
   const [targetParticipant, setTargetParticipant] = useState<ParticipantData | null>(null);
-  const [newSlotNumber, setNewSlotNumber] = useState<number | ''>('');
+  const [editForm, setEditForm] = useState({
+    fullName: '',
+    gamerTag: '',
+    college: '',
+    rollNumber: '',
+    phone: '',
+    email: '',
+    preferredFighter: 'Scorpion',
+    age: '',
+    status: 'REGISTERED',
+    notes: '',
+    slotNumber: '' as number | '',
+    swapWithOccupant: false,
+  });
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+
+  // Drag and Drop state for bracket slots
+  const [draggedParticipantId, setDraggedParticipantId] = useState<string | null>(null);
+  const [dragOverSlot, setDragOverSlot] = useState<number | null>(null);
+  const [isDroppingBench, setIsDroppingBench] = useState(false);
+  const [slotMoving, setSlotMoving] = useState(false);
+  const [showBench, setShowBench] = useState(true);
 
   // Clear All modal
   const [clearAllModalOpen, setClearAllModalOpen] = useState(false);
@@ -241,26 +269,179 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleReassignSlot = async (e: React.FormEvent) => {
+  const openEditModal = (p: ParticipantData) => {
+    setTargetParticipant(p);
+    setEditForm({
+      fullName: p.fullName || '',
+      gamerTag: p.gamerTag || '',
+      college: p.college || '',
+      rollNumber: p.rollNumber || '',
+      phone: p.phone || '',
+      email: p.email || '',
+      preferredFighter: p.preferredFighter || 'Scorpion',
+      age: p.age !== undefined && p.age !== null ? String(p.age) : '',
+      status: p.status || 'REGISTERED',
+      notes: p.notes || '',
+      slotNumber: p.slotNumber !== null && p.slotNumber !== undefined ? p.slotNumber : '',
+      swapWithOccupant: false,
+    });
+    setEditError(null);
+    setReassignModalOpen(true);
+  };
+
+  const handleSaveParticipant = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!targetParticipant) return;
 
+    setEditSaving(true);
+    setEditError(null);
+
     try {
+      const payload: Record<string, unknown> = {
+        fullName: editForm.fullName,
+        gamerTag: editForm.gamerTag,
+        college: editForm.college,
+        rollNumber: editForm.rollNumber,
+        phone: editForm.phone,
+        email: editForm.email,
+        preferredFighter: editForm.preferredFighter,
+        age: editForm.age ? Number(editForm.age) : null,
+        status: editForm.status,
+        notes: editForm.notes,
+        slotNumber: editForm.slotNumber === '' ? null : Number(editForm.slotNumber),
+        swapWithOccupant: editForm.swapWithOccupant,
+      };
+
       const res = await fetch(`/api/admin/participants/${targetParticipant.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slotNumber: newSlotNumber }),
+        body: JSON.stringify(payload),
       });
+
       const data = await res.json();
-      if (!res.ok) {
-        alert(data.error || 'Failed to reassign slot');
+      if (!res.ok || !data.success) {
+        setEditError(data.error || 'Failed to update participant');
       } else {
         setReassignModalOpen(false);
-        setActionMessage(`Slot reassigned to #${newSlotNumber}!`);
+        setActionMessage(data.message || 'Contender details and slot updated successfully!');
+        if (combatSound && combatSound.playSlash) combatSound.playSlash();
         fetchDashboardData();
+        fetchMatches();
+      }
+    } catch {
+      setEditError('Network error while saving updates');
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+  const handleDragStart = (e: React.DragEvent, participant: ParticipantData) => {
+    e.dataTransfer.setData('text/plain', participant.id);
+    e.dataTransfer.effectAllowed = 'move';
+    setDraggedParticipantId(participant.id);
+    if (combatSound && combatSound.playSlash) combatSound.playSlash();
+  };
+
+  const handleDragEnd = () => {
+    setDraggedParticipantId(null);
+    setDragOverSlot(null);
+    setIsDroppingBench(false);
+  };
+
+  const handleDragOverSlot = (e: React.DragEvent, targetSlot: number) => {
+    if (!draggedParticipantId) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverSlot !== targetSlot) {
+      setDragOverSlot(targetSlot);
+    }
+  };
+
+  const handleDropOnSlot = async (e: React.DragEvent, targetSlot: number) => {
+    e.preventDefault();
+    const participantId = e.dataTransfer.getData('text/plain') || draggedParticipantId;
+    setDragOverSlot(null);
+    setDraggedParticipantId(null);
+
+    if (!participantId || !targetSlot) return;
+
+    const currentParticipant = participants.find((p) => p.id === participantId);
+    if (!currentParticipant) return;
+    if (currentParticipant.slotNumber === targetSlot) return;
+
+    const occupant = participants.find(
+      (p) =>
+        p.slotNumber === targetSlot &&
+        p.id !== participantId &&
+        ['REGISTERED', 'CHECKED-IN', 'PLAYING', 'ADVANCED'].includes(p.status)
+    );
+
+    setSlotMoving(true);
+    try {
+      const res = await fetch(`/api/admin/participants/${participantId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slotNumber: targetSlot,
+          swapWithOccupant: true,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setActionMessage(data.error || 'Failed to move player to slot');
+      } else {
+        if (occupant) {
+          setActionMessage(
+            `🔀 Swapped slots: ${currentParticipant.fullName} is now Slot #${String(targetSlot).padStart(3, '0')}, and ${occupant.fullName} is now ${
+              currentParticipant.slotNumber ? `Slot #${String(currentParticipant.slotNumber).padStart(3, '0')}` : 'Waitlist'
+            }!`
+          );
+        } else {
+          setActionMessage(`✓ Placed ${currentParticipant.fullName} into Slot #${String(targetSlot).padStart(3, '0')}!`);
+        }
+        if (combatSound && combatSound.playSlash) combatSound.playSlash();
+        fetchDashboardData(false);
+        fetchMatches();
       }
     } catch (err) {
       console.error(err);
+      setActionMessage('Network error while moving slot');
+    } finally {
+      setSlotMoving(false);
+    }
+  };
+
+  const handleDropOnBench = async (e: React.DragEvent) => {
+    e.preventDefault();
+    const participantId = e.dataTransfer.getData('text/plain') || draggedParticipantId;
+    setIsDroppingBench(false);
+    setDraggedParticipantId(null);
+
+    if (!participantId) return;
+    const currentParticipant = participants.find((p) => p.id === participantId);
+    if (!currentParticipant || !currentParticipant.slotNumber) return;
+
+    setSlotMoving(true);
+    try {
+      const res = await fetch(`/api/admin/participants/${participantId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slotNumber: null }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setActionMessage(
+          `Released Slot #${String(currentParticipant.slotNumber).padStart(3, '0')}. ${currentParticipant.fullName} is now on the unassigned bench / waitlist.`
+        );
+        if (combatSound && combatSound.playSlash) combatSound.playSlash();
+        fetchDashboardData(false);
+        fetchMatches();
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSlotMoving(false);
     }
   };
 
@@ -817,13 +998,9 @@ export default function AdminDashboard() {
                         )}
 
                         <button
-                          onClick={() => {
-                            setTargetParticipant(p);
-                            setNewSlotNumber(p.slotNumber || '');
-                            setReassignModalOpen(true);
-                          }}
-                          title="Reassign Slot"
-                          className="rounded border border-slate-700 bg-slate-900 p-1 text-slate-300 hover:text-white"
+                          onClick={() => openEditModal(p)}
+                          title="Edit Contender Details & Custom Slot"
+                          className="rounded border border-red-500/50 bg-red-950/40 p-1 text-red-300 hover:bg-red-900/60 hover:text-white transition-colors"
                         >
                           <Edit className="h-3.5 w-3.5" />
                         </button>
@@ -955,6 +1132,110 @@ export default function AdminDashboard() {
             </div>
           </div>
 
+          {/* ── DRAG & DROP CONTENDER BENCH & ORGANIZER BAR ── */}
+          <div className="rounded-2xl border border-red-900/50 bg-gradient-to-r from-red-950/40 via-black/80 to-red-950/40 p-4 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-red-500/50 bg-red-950 text-red-400">
+                  <ArrowRightLeft className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="font-heading text-xs font-black uppercase tracking-wider text-white flex items-center gap-2">
+                    <span>DRAG & DROP BRACKET ORGANIZER</span>
+                    {slotMoving && <span className="text-[10px] text-amber-400 animate-pulse font-normal font-sans">(Saving change...)</span>}
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    Drag any contender between slots to <strong className="text-white">swap positions</strong> or place them into open bracket slots.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowBench(!showBench)}
+                  className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs font-bold text-slate-300 hover:text-white transition-colors flex items-center gap-1.5"
+                >
+                  <Users className="h-3.5 w-3.5 text-red-400" />
+                  <span>
+                    {showBench
+                      ? 'HIDE BENCH'
+                      : `SHOW BENCH (${participants.filter((p) => p.slotNumber === null && p.status !== 'CANCELLED').length})`}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* Bench Dropzone & Available Players Carousel */}
+            {showBench && (() => {
+              const unassigned = participants.filter((p) => p.slotNumber === null && p.status !== 'CANCELLED');
+              return (
+                <div className="mt-3 pt-3 border-t border-red-900/30">
+                  <div className="flex flex-col md:flex-row gap-3 items-stretch">
+                    {/* Unassign / Waitlist Dropzone */}
+                    <div
+                      onDragOver={(e) => {
+                        if (draggedParticipantId) {
+                          e.preventDefault();
+                          setIsDroppingBench(true);
+                        }
+                      }}
+                      onDragLeave={() => setIsDroppingBench(false)}
+                      onDrop={handleDropOnBench}
+                      className={`flex-1 md:max-w-xs rounded-xl border-2 border-dashed p-3 text-center flex flex-col items-center justify-center transition-all ${
+                        isDroppingBench
+                          ? 'border-red-500 bg-red-950/80 scale-[1.02] shadow-glow-crimson'
+                          : 'border-slate-800 bg-black/40 hover:border-slate-700'
+                      }`}
+                    >
+                      <span className="text-xs font-black uppercase tracking-wide text-slate-300">
+                        {isDroppingBench ? '📥 DROP HERE TO UNASSIGN' : 'DROP PLAYER HERE TO UNASSIGN'}
+                      </span>
+                      <span className="text-[10px] text-slate-500 mt-0.5">
+                        Releases their slot and moves them to unassigned / waitlist
+                      </span>
+                    </div>
+
+                    {/* Unassigned / Available Contenders List */}
+                    <div className="flex-1 overflow-x-auto pb-1">
+                      <div className="flex items-center gap-2 min-w-max">
+                        {unassigned.length === 0 ? (
+                          <div className="text-xs text-slate-500 py-3 px-4 italic">
+                            All registered participants currently have slots assigned.
+                          </div>
+                        ) : (
+                          unassigned.map((p) => (
+                            <div
+                              key={p.id}
+                              draggable
+                              onDragStart={(e) => handleDragStart(e, p)}
+                              onDragEnd={handleDragEnd}
+                              className="rounded-xl border border-slate-800 bg-black/70 hover:border-red-500/60 p-2.5 flex items-center gap-2.5 cursor-grab active:cursor-grabbing hover:bg-slate-900/80 transition-all select-none group shadow-sm"
+                              title="Drag onto any bracket slot to assign"
+                            >
+                              <GripVertical className="h-3.5 w-3.5 text-slate-600 group-hover:text-red-400 shrink-0" />
+                              <div className="text-left">
+                                <div className="font-heading text-xs font-black text-white truncate max-w-[120px]">
+                                  {p.fullName}
+                                </div>
+                                <div className="text-[10px] text-red-400 font-bold truncate max-w-[120px]">
+                                  {p.gamerTag}
+                                </div>
+                              </div>
+                              <span className="rounded bg-amber-950 border border-amber-600/40 px-1.5 py-0.5 text-[9px] font-bold text-amber-300">
+                                {p.status === 'WAITLISTED' ? `WL #${p.waitlistPosition || 1}` : 'No Slot'}
+                              </span>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+
           {/* Matches Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {matches
@@ -964,6 +1245,30 @@ export default function AdminDashboard() {
                 const isP1Winner = isCompleted && m.winnerSlot !== null && m.winnerSlot === m.player1Slot;
                 const isP2Winner = isCompleted && m.winnerSlot !== null && m.winnerSlot === m.player2Slot;
                 const isUpdating = updatingMatchId === m.id;
+
+                const p1 = m.player1Slot
+                  ? participants.find(
+                      (p) =>
+                        p.slotNumber === m.player1Slot &&
+                        ['REGISTERED', 'CHECKED-IN', 'PLAYING', 'ADVANCED'].includes(p.status)
+                    )
+                  : null;
+                const isP1DropTarget = Boolean(
+                  dragOverSlot === m.player1Slot && draggedParticipantId && (!p1 || p1.id !== draggedParticipantId)
+                );
+                const isP1BeingDragged = Boolean(p1 && draggedParticipantId === p1.id);
+
+                const p2 = m.player2Slot
+                  ? participants.find(
+                      (p) =>
+                        p.slotNumber === m.player2Slot &&
+                        ['REGISTERED', 'CHECKED-IN', 'PLAYING', 'ADVANCED'].includes(p.status)
+                    )
+                  : null;
+                const isP2DropTarget = Boolean(
+                  dragOverSlot === m.player2Slot && draggedParticipantId && (!p2 || p2.id !== draggedParticipantId)
+                );
+                const isP2BeingDragged = Boolean(p2 && draggedParticipantId === p2.id);
 
                 return (
                   <div
@@ -1032,19 +1337,80 @@ export default function AdminDashboard() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {/* Player 1 Side */}
                       <div
-                        className={`rounded-xl border p-3 flex flex-col justify-between transition-all ${
-                          isP1Winner
+                        onDragOver={(e) => m.player1Slot && handleDragOverSlot(e, m.player1Slot)}
+                        onDragLeave={() => {
+                          if (dragOverSlot === m.player1Slot) setDragOverSlot(null);
+                        }}
+                        onDrop={(e) => m.player1Slot && handleDropOnSlot(e, m.player1Slot)}
+                        className={`relative rounded-xl border p-3 flex flex-col justify-between transition-all ${
+                          isP1DropTarget
+                            ? 'border-2 border-emerald-500 bg-emerald-950/40 shadow-[0_0_20px_rgba(16,185,129,0.3)] scale-[1.02]'
+                            : isP1BeingDragged
+                            ? 'border-2 border-dashed border-red-500 bg-red-950/20 opacity-50'
+                            : isP1Winner
                             ? 'border-amber-500 bg-amber-950/40 text-white shadow-[0_0_20px_rgba(245,158,11,0.2)]'
                             : isCompleted
-                            ? 'border-slate-800/80 bg-black/30 opacity-60'
-                            : 'border-slate-800 bg-black/60'
+                            ? 'border-slate-800/80 bg-black/30 opacity-70'
+                            : 'border-slate-800 bg-black/60 hover:border-slate-700'
                         }`}
                       >
-                        <div>
+                        {/* Drop Target Indicator Overlay */}
+                        {isP1DropTarget && (
+                          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center rounded-xl bg-black/90 border-2 border-dashed border-emerald-500 p-2 text-center backdrop-blur-xs animate-pulse pointer-events-none">
+                            {p1 ? (
+                              <>
+                                <ArrowRightLeft className="h-5 w-5 text-amber-400 mb-1" />
+                                <span className="text-[11px] font-black uppercase text-amber-200">DROP TO SWAP</span>
+                                <span className="text-[10px] text-amber-300 font-bold truncate max-w-full">
+                                  with {p1.fullName}
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle className="h-5 w-5 text-emerald-400 mb-1" />
+                                <span className="text-[11px] font-black uppercase text-emerald-200">DROP TO PLACE</span>
+                                <span className="text-[10px] text-emerald-300 font-mono font-bold">
+                                  in Slot #{String(m.player1Slot).padStart(3, '0')}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Contender Card Content (Draggable if player present) */}
+                        <div
+                          draggable={Boolean(p1 && !isCompleted && !isP1Winner)}
+                          onDragStart={(e) => p1 && handleDragStart(e, p1)}
+                          onDragEnd={handleDragEnd}
+                          className={`${
+                            p1 && !isCompleted && !isP1Winner
+                              ? 'cursor-grab active:cursor-grabbing hover:bg-white/[0.03] rounded-lg p-1 -m-1 transition-colors select-none group'
+                              : ''
+                          }`}
+                          title={p1 ? 'Drag to move or swap slot with another player' : 'Open slot'}
+                        >
                           <div className="flex items-center justify-between mb-1">
-                            <span className="rounded bg-slate-900 border border-slate-700 px-1.5 py-0.5 font-mono text-[9px] font-bold text-slate-400">
-                              {m.player1Slot ? `#${String(m.player1Slot).padStart(3, '0')}` : '??'}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              {p1 && !isCompleted && !isP1Winner && (
+                                <GripVertical className="h-3.5 w-3.5 text-slate-500 group-hover:text-red-400 transition-colors shrink-0" />
+                              )}
+                              <span className="rounded bg-slate-900 border border-slate-700 px-1.5 py-0.5 font-mono text-[9px] font-bold text-slate-400">
+                                {m.player1Slot ? `#${String(m.player1Slot).padStart(3, '0')}` : '??'}
+                              </span>
+                              {p1 && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openEditModal(p1);
+                                  }}
+                                  title="Edit Contender & Custom Slot"
+                                  className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-slate-500 hover:text-red-400 transition-all"
+                                >
+                                  <Edit className="h-3 w-3" />
+                                </button>
+                              )}
+                            </div>
                             <span className="font-heading text-base font-black text-white">
                               {m.score1}
                             </span>
@@ -1087,19 +1453,80 @@ export default function AdminDashboard() {
 
                       {/* Player 2 Side */}
                       <div
-                        className={`rounded-xl border p-3 flex flex-col justify-between transition-all ${
-                          isP2Winner
+                        onDragOver={(e) => m.player2Slot && handleDragOverSlot(e, m.player2Slot)}
+                        onDragLeave={() => {
+                          if (dragOverSlot === m.player2Slot) setDragOverSlot(null);
+                        }}
+                        onDrop={(e) => m.player2Slot && handleDropOnSlot(e, m.player2Slot)}
+                        className={`relative rounded-xl border p-3 flex flex-col justify-between transition-all ${
+                          isP2DropTarget
+                            ? 'border-2 border-emerald-500 bg-emerald-950/40 shadow-[0_0_20px_rgba(16,185,129,0.3)] scale-[1.02]'
+                            : isP2BeingDragged
+                            ? 'border-2 border-dashed border-red-500 bg-red-950/20 opacity-50'
+                            : isP2Winner
                             ? 'border-amber-500 bg-amber-950/40 text-white shadow-[0_0_20px_rgba(245,158,11,0.2)]'
                             : isCompleted
-                            ? 'border-slate-800/80 bg-black/30 opacity-60'
-                            : 'border-slate-800 bg-black/60'
+                            ? 'border-slate-800/80 bg-black/30 opacity-70'
+                            : 'border-slate-800 bg-black/60 hover:border-slate-700'
                         }`}
                       >
-                        <div>
+                        {/* Drop Target Indicator Overlay */}
+                        {isP2DropTarget && (
+                          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center rounded-xl bg-black/90 border-2 border-dashed border-emerald-500 p-2 text-center backdrop-blur-xs animate-pulse pointer-events-none">
+                            {p2 ? (
+                              <>
+                                <ArrowRightLeft className="h-5 w-5 text-amber-400 mb-1" />
+                                <span className="text-[11px] font-black uppercase text-amber-200">DROP TO SWAP</span>
+                                <span className="text-[10px] text-amber-300 font-bold truncate max-w-full">
+                                  with {p2.fullName}
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle className="h-5 w-5 text-emerald-400 mb-1" />
+                                <span className="text-[11px] font-black uppercase text-emerald-200">DROP TO PLACE</span>
+                                <span className="text-[10px] text-emerald-300 font-mono font-bold">
+                                  in Slot #{String(m.player2Slot).padStart(3, '0')}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Contender Card Content (Draggable if player present) */}
+                        <div
+                          draggable={Boolean(p2 && !isCompleted && !isP2Winner)}
+                          onDragStart={(e) => p2 && handleDragStart(e, p2)}
+                          onDragEnd={handleDragEnd}
+                          className={`${
+                            p2 && !isCompleted && !isP2Winner
+                              ? 'cursor-grab active:cursor-grabbing hover:bg-white/[0.03] rounded-lg p-1 -m-1 transition-colors select-none group'
+                              : ''
+                          }`}
+                          title={p2 ? 'Drag to move or swap slot with another player' : 'Open slot'}
+                        >
                           <div className="flex items-center justify-between mb-1">
-                            <span className="rounded bg-slate-900 border border-slate-700 px-1.5 py-0.5 font-mono text-[9px] font-bold text-slate-400">
-                              {m.player2Slot ? `#${String(m.player2Slot).padStart(3, '0')}` : '??'}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              {p2 && !isCompleted && !isP2Winner && (
+                                <GripVertical className="h-3.5 w-3.5 text-slate-500 group-hover:text-red-400 transition-colors shrink-0" />
+                              )}
+                              <span className="rounded bg-slate-900 border border-slate-700 px-1.5 py-0.5 font-mono text-[9px] font-bold text-slate-400">
+                                {m.player2Slot ? `#${String(m.player2Slot).padStart(3, '0')}` : '??'}
+                              </span>
+                              {p2 && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openEditModal(p2);
+                                  }}
+                                  title="Edit Contender & Custom Slot"
+                                  className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-slate-500 hover:text-red-400 transition-all"
+                                >
+                                  <Edit className="h-3 w-3" />
+                                </button>
+                              )}
+                            </div>
                             <span className="font-heading text-base font-black text-white">
                               {m.score2}
                             </span>
@@ -1218,53 +1645,315 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Slot Reassignment Modal */}
-      {reassignModalOpen && targetParticipant && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="w-full max-w-sm rounded-xl border border-arena-cardBorder bg-arena-card p-6 shadow-2xl">
-            <h3 className="font-heading text-lg font-black uppercase text-white">
-              MANUALLY REASSIGN SLOT
-            </h3>
-            <p className="mt-1 text-xs text-slate-400">
-              Change slot for <strong>{targetParticipant.fullName}</strong> ({targetParticipant.gamerTag}).
-            </p>
+      {/* Edit Contender & Slot Customization Modal */}
+      {reassignModalOpen && targetParticipant && (() => {
+        const totalSlots = stats?.totalSlots || 128;
+        const targetSlotNum = editForm.slotNumber === '' ? null : Number(editForm.slotNumber);
+        const slotOccupant = targetSlotNum !== null && targetSlotNum !== targetParticipant.slotNumber
+          ? participants.find(
+              (p) =>
+                p.slotNumber === targetSlotNum &&
+                p.id !== targetParticipant.id &&
+                ['REGISTERED', 'CHECKED-IN', 'PLAYING', 'ADVANCED'].includes(p.status)
+            )
+          : null;
 
-            <form onSubmit={handleReassignSlot} className="mt-4 space-y-4">
-              <div>
-                <label className="block text-xs font-bold uppercase text-slate-300">
-                  NEW SLOT NUMBER (1 - {stats?.totalSlots || 32})
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max={stats?.totalSlots || 32}
-                  value={newSlotNumber}
-                  onChange={(e) => setNewSlotNumber(e.target.value === '' ? '' : Number(e.target.value))}
-                  placeholder="Enter slot number"
-                  required
-                  className="mt-1.5 w-full rounded-lg border border-slate-800 bg-black/60 px-4 py-2 text-sm text-white focus:border-red-500 focus:outline-none"
-                />
-              </div>
+        const poolSize = Math.ceil(totalSlots / 4);
+        let previewPool = 'Waitlist / None';
+        if (targetSlotNum && targetSlotNum >= 1 && targetSlotNum <= totalSlots) {
+          if (targetSlotNum <= poolSize) previewPool = 'Pool A';
+          else if (targetSlotNum <= poolSize * 2) previewPool = 'Pool B';
+          else if (targetSlotNum <= poolSize * 3) previewPool = 'Pool C';
+          else previewPool = 'Pool D';
+        }
 
-              <div className="flex justify-end gap-3 border-t border-slate-800 pt-3">
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 overflow-y-auto">
+            <div className="w-full max-w-2xl my-8 rounded-2xl border-2 border-red-900/60 bg-[#0c0505] p-5 sm:p-7 shadow-[0_0_50px_rgba(220,38,38,0.25)] text-left">
+              {/* Header */}
+              <div className="flex items-start justify-between border-b border-red-900/40 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-red-500/50 bg-red-950/80 text-red-400 shadow-glow-crimson">
+                    <UserCog className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-heading text-lg font-black uppercase text-white tracking-wide">
+                      Edit Contender & Custom Slot
+                    </h3>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="font-mono text-xs text-red-400 font-bold">{targetParticipant.registrationId}</span>
+                      <span className="text-slate-600">•</span>
+                      <span className="text-xs text-slate-400">{targetParticipant.fullName}</span>
+                    </div>
+                  </div>
+                </div>
                 <button
                   type="button"
                   onClick={() => setReassignModalOpen(false)}
-                  className="rounded-lg border border-slate-800 px-3 py-1.5 text-xs font-bold text-slate-400 hover:text-white"
+                  className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-900 hover:text-white"
                 >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="rounded-lg border border-red-500 bg-red-700 px-4 py-1.5 text-xs font-black uppercase text-white hover:bg-red-600"
-                >
-                  Update Slot
+                  ✕
                 </button>
               </div>
-            </form>
+
+              {editError && (
+                <div className="mt-4 flex items-start gap-2 rounded-xl border border-red-800 bg-red-950/90 p-3.5 text-xs font-semibold text-red-200">
+                  <AlertTriangle className="h-4 w-4 shrink-0 text-red-400 mt-0.5" />
+                  <div className="flex-1">{editError}</div>
+                </div>
+              )}
+
+              <form onSubmit={handleSaveParticipant} className="mt-5 space-y-5">
+                {/* ── TOURNAMENT SLOT ALLOCATION CARD ── */}
+                <div className="rounded-xl border border-red-700/50 bg-red-950/30 p-4 space-y-3.5">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Trophy className="h-4 w-4 text-amber-400" />
+                      <span className="font-heading text-xs font-black uppercase tracking-wider text-white">
+                        TOURNAMENT SLOT ALLOCATION
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      Current: {targetParticipant.slotNumber ? `Slot #${String(targetParticipant.slotNumber).padStart(3, '0')} (${targetParticipant.pool || 'Assigned'})` : 'Waitlisted / No Slot'}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300">
+                        ASSIGNED SLOT NUMBER (1 - {totalSlots})
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max={totalSlots}
+                        value={editForm.slotNumber}
+                        onChange={(e) => {
+                          const val = e.target.value === '' ? '' : Number(e.target.value);
+                          setEditForm({ ...editForm, slotNumber: val, swapWithOccupant: false });
+                          setEditError(null);
+                        }}
+                        placeholder="e.g. 15 (Blank = Waitlist)"
+                        className="mt-1 w-full rounded-lg border border-red-900/60 bg-black/80 px-3.5 py-2 font-mono text-sm font-bold text-white focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500/40"
+                      />
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditForm({ ...editForm, slotNumber: '', swapWithOccupant: false });
+                          setEditError(null);
+                        }}
+                        className="flex-1 rounded-lg border border-slate-700 bg-slate-900/80 px-3 py-2 text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+                      >
+                        Clear Slot (Waitlist)
+                      </button>
+
+                      {editForm.slotNumber !== '' && (
+                        <div className="flex items-center px-3 py-2 rounded-lg bg-black/60 border border-slate-800 text-xs font-bold text-red-300 font-mono">
+                          {previewPool}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Slot Occupancy & Swap Notice */}
+                  {slotOccupant && (
+                    <div className="rounded-xl border border-amber-600/70 bg-amber-950/50 p-3.5 space-y-2">
+                      <div className="flex items-start gap-2.5">
+                        <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400 mt-0.5" />
+                        <div className="text-xs text-amber-200">
+                          <span className="font-bold text-white">Slot #{String(targetSlotNum).padStart(3, '0')}</span> is currently occupied by{' '}
+                          <span className="font-bold text-white">{slotOccupant.fullName}</span> ({slotOccupant.gamerTag} • {slotOccupant.registrationId}).
+                        </div>
+                      </div>
+
+                      <label className="flex items-center gap-3 p-2.5 rounded-lg bg-black/60 border border-amber-500/40 cursor-pointer hover:bg-black/80 transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={editForm.swapWithOccupant}
+                          onChange={(e) => setEditForm({ ...editForm, swapWithOccupant: e.target.checked })}
+                          className="h-4 w-4 rounded border-amber-500 text-red-600 focus:ring-red-500"
+                        />
+                        <div className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                          <ArrowRightLeft className="h-3.5 w-3.5 text-amber-400" />
+                          <span>
+                            SWAP SLOTS: Move {slotOccupant.fullName} into this player&apos;s current slot ({targetParticipant.slotNumber ? `Slot #${String(targetParticipant.slotNumber).padStart(3, '0')}` : 'Waitlist'})
+                          </span>
+                        </div>
+                      </label>
+                    </div>
+                  )}
+
+                  {!slotOccupant && targetSlotNum !== null && targetSlotNum !== targetParticipant.slotNumber && (
+                    <div className="flex items-center gap-2 text-xs font-bold text-emerald-400 bg-emerald-950/40 border border-emerald-800/60 rounded-lg p-2.5">
+                      <CheckCircle className="h-4 w-4 text-emerald-400" />
+                      <span>Slot #{String(targetSlotNum).padStart(3, '0')} is open and ready to be assigned.</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* ── REGISTRATION DETAILS CORRECTION ── */}
+                <div className="space-y-4">
+                  <span className="font-heading text-xs font-black uppercase tracking-wider text-slate-400 block border-b border-slate-800 pb-1.5">
+                    REGISTRATION DATA CORRECTIONS
+                  </span>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300">
+                        Full Legal Name
+                      </label>
+                      <input
+                        type="text"
+                        value={editForm.fullName}
+                        onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
+                        required
+                        className="mt-1 w-full rounded-lg border border-slate-800 bg-black/70 px-3 py-2 text-xs text-white focus:border-red-500 focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300">
+                        Gamer Tag / Handle
+                      </label>
+                      <input
+                        type="text"
+                        value={editForm.gamerTag}
+                        onChange={(e) => setEditForm({ ...editForm, gamerTag: e.target.value })}
+                        required
+                        className="mt-1 w-full rounded-lg border border-slate-800 bg-black/70 px-3 py-2 text-xs text-white focus:border-red-500 focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300">
+                        College / Institution
+                      </label>
+                      <input
+                        type="text"
+                        value={editForm.college}
+                        onChange={(e) => setEditForm({ ...editForm, college: e.target.value })}
+                        required
+                        className="mt-1 w-full rounded-lg border border-slate-800 bg-black/70 px-3 py-2 text-xs text-white focus:border-red-500 focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300">
+                        Roll Number / Student ID
+                      </label>
+                      <input
+                        type="text"
+                        value={editForm.rollNumber}
+                        onChange={(e) => setEditForm({ ...editForm, rollNumber: e.target.value })}
+                        required
+                        className="mt-1 w-full rounded-lg border border-slate-800 bg-black/70 px-3 py-2 text-xs font-mono text-white focus:border-red-500 focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300">
+                        Phone Number
+                      </label>
+                      <input
+                        type="text"
+                        value={editForm.phone}
+                        onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                        required
+                        className="mt-1 w-full rounded-lg border border-slate-800 bg-black/70 px-3 py-2 text-xs text-white focus:border-red-500 focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300">
+                        Email Address
+                      </label>
+                      <input
+                        type="email"
+                        value={editForm.email}
+                        onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                        required
+                        className="mt-1 w-full rounded-lg border border-slate-800 bg-black/70 px-3 py-2 text-xs text-white focus:border-red-500 focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300">
+                        Preferred Fighter
+                      </label>
+                      <select
+                        value={editForm.preferredFighter}
+                        onChange={(e) => setEditForm({ ...editForm, preferredFighter: e.target.value })}
+                        className="mt-1 w-full rounded-lg border border-slate-800 bg-black/80 px-3 py-2 text-xs text-white focus:border-red-500 focus:outline-none"
+                      >
+                        {MK11_ROSTER.map((f) => (
+                          <option key={f.name} value={f.name}>
+                            {f.name} ({f.archetype.split('/')[0]})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300">
+                        Participant Status
+                      </label>
+                      <select
+                        value={editForm.status}
+                        onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                        className="mt-1 w-full rounded-lg border border-slate-800 bg-black/80 px-3 py-2 text-xs text-white focus:border-red-500 focus:outline-none"
+                      >
+                        <option value="REGISTERED">REGISTERED</option>
+                        <option value="CHECKED-IN">CHECKED-IN</option>
+                        <option value="WAITLISTED">WAITLISTED</option>
+                        <option value="PLAYING">PLAYING</option>
+                        <option value="ADVANCED">ADVANCED</option>
+                        <option value="ELIMINATED">ELIMINATED</option>
+                        <option value="CANCELLED">CANCELLED</option>
+                        <option value="DISQUALIFIED">DISQUALIFIED</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300">
+                      Admin Notes / Corrections Log
+                    </label>
+                    <input
+                      type="text"
+                      value={editForm.notes}
+                      onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                      placeholder="e.g. Corrected roll number upon student desk verification"
+                      className="mt-1 w-full rounded-lg border border-slate-800 bg-black/70 px-3 py-2 text-xs text-white placeholder-slate-600 focus:border-red-500 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Footer Buttons */}
+                <div className="flex justify-end gap-3 border-t border-slate-800 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setReassignModalOpen(false)}
+                    disabled={editSaving}
+                    className="rounded-lg border border-slate-800 px-4 py-2.5 text-xs font-bold text-slate-300 hover:text-white disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={editSaving || (Boolean(slotOccupant) && !editForm.swapWithOccupant)}
+                    className="rounded-lg border border-red-500 bg-red-700 px-6 py-2.5 font-heading text-xs font-black uppercase text-white shadow-glow-crimson hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  >
+                    {editSaving ? 'SAVING CHANGES...' : 'SAVE & SYNC TOURNAMENT'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Record Match Result Modal */}
       {matchModalOpen && (
